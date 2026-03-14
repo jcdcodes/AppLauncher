@@ -9,6 +9,7 @@ class KeyableWindow: NSPanel {
 class LauncherWindowController {
     private var window: KeyableWindow?
     private var monitor: Any?
+    private var previousApp: NSRunningApplication?
 
     func show() {
         createWindow()
@@ -22,6 +23,7 @@ class LauncherWindowController {
             window.setFrameOrigin(NSPoint(x: x, y: y))
         }
 
+        previousApp = NSWorkspace.shared.frontmostApplication
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
 
@@ -43,6 +45,8 @@ class LauncherWindowController {
             NSEvent.removeMonitor(monitor)
             self.monitor = nil
         }
+        previousApp?.activate()
+        previousApp = nil
     }
 
     private func findTextField(in view: NSView) -> NSTextField? {
