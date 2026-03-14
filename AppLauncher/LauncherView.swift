@@ -21,7 +21,27 @@ struct LauncherView: View {
     var filtered: [AppEntry] {
         if query.isEmpty { return allApps }
         let q = query.lowercased()
-        return allApps.filter { $0.name.lowercased().hasPrefix(q) }
+        let history = LaunchHistory.shared
+
+        // Apps matching by name prefix
+        var results = allApps.filter { $0.name.lowercased().hasPrefix(q) }
+
+        // Apps matching via aliases (e.g. "pref" → "System Settings")
+        let aliasNames = Set(history.aliasMatches(for: q))
+        for app in allApps where aliasNames.contains(app.name) {
+            if !results.contains(where: { $0.id == app.id }) {
+                results.append(app)
+            }
+        }
+
+        // Boost last-launched app for this prefix to the top
+        if let boosted = history.boostedApp(for: q),
+           let idx = results.firstIndex(where: { $0.name == boosted }), idx > 0 {
+            let app = results.remove(at: idx)
+            results.insert(app, at: 0)
+        }
+
+        return results
     }
 
     var body: some View {
@@ -105,7 +125,11 @@ struct LauncherView: View {
 
     private func launch() {
         guard !filtered.isEmpty, selectedIndex < filtered.count else { return }
-        onLaunch(filtered[selectedIndex])
+        let app = filtered[selectedIndex]
+        if !query.isEmpty {
+            LaunchHistory.shared.record(query: query, appName: app.name)
+        }
+        onLaunch(app)
     }
 
     private func moveDown() {

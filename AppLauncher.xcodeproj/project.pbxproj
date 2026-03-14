@@ -11,6 +11,7 @@
 		A002 /* AppScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = B002 /* AppScanner.swift */; };
 		A003 /* LauncherView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B003 /* LauncherView.swift */; };
 		A004 /* LauncherWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B004 /* LauncherWindowController.swift */; };
+		A005 /* LaunchHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = B006 /* LaunchHistory.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -20,6 +21,7 @@
 		B003 /* LauncherView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LauncherView.swift; sourceTree = "<group>"; };
 		B004 /* LauncherWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LauncherWindowController.swift; sourceTree = "<group>"; };
 		B005 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B006 /* LaunchHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchHistory.swift; sourceTree = "<group>"; };
 		PROD /* AppLauncher.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AppLauncher.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -56,6 +58,7 @@
 				0367D33E2F65D475004E3172 /* README.md */,
 				B001 /* AppLauncherApp.swift */,
 				B002 /* AppScanner.swift */,
+				B006 /* LaunchHistory.swift */,
 				B003 /* LauncherView.swift */,
 				B004 /* LauncherWindowController.swift */,
 				B005 /* Info.plist */,
@@ -124,6 +127,7 @@
 				A002 /* AppScanner.swift in Sources */,
 				A003 /* LauncherView.swift in Sources */,
 				A004 /* LauncherWindowController.swift in Sources */,
+				A005 /* LaunchHistory.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
