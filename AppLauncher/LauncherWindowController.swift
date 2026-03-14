@@ -9,7 +9,6 @@ class KeyableWindow: NSPanel {
 class LauncherWindowController {
     private let window: KeyableWindow
     private let state = LauncherState()
-    private var monitor: Any?
     private var previousApp: NSRunningApplication?
     private var textField: NSTextField?
 
@@ -46,9 +45,9 @@ class LauncherWindowController {
         // Now rewire callbacks with actual self reference
         let updatedView = LauncherView(
             state: state,
-            onDismiss: { [weak self] in self?.hide() },
+            onDismiss: { [weak self] in self?.dismiss() },
             onLaunch: { [weak self] app in
-                self?.hide()
+                self?.dismiss()
                 NSWorkspace.shared.openApplication(at: app.url, configuration: NSWorkspace.OpenConfiguration())
             }
         )
@@ -57,6 +56,15 @@ class LauncherWindowController {
         // Cache the text field reference after layout
         DispatchQueue.main.async {
             self.textField = self.findTextField(in: win.contentView!)
+        }
+
+        // Dismiss when window loses focus (Cmd+Tab, clicking another app, etc.)
+        NotificationCenter.default.addObserver(
+            forName: NSWindow.didResignKeyNotification,
+            object: win,
+            queue: .main
+        ) { [weak self] _ in
+            self?.hide()
         }
     }
 
@@ -83,12 +91,6 @@ class LauncherWindowController {
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
         focusTextField()
-
-        if monitor == nil {
-            monitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
-                self?.hide()
-            }
-        }
     }
 
     private func focusTextField() {
@@ -103,14 +105,20 @@ class LauncherWindowController {
         }
     }
 
-    private func hide() {
-        window.orderOut(nil)
-        if let monitor = monitor {
-            NSEvent.removeMonitor(monitor)
-            self.monitor = nil
-        }
-        previousApp?.activate()
+    /// User-initiated dismiss (Escape, launching an app) — reactivate previous app
+    private func dismiss() {
+        guard window.isVisible else { return }
+        let app = previousApp
         previousApp = nil
+        window.orderOut(nil)
+        app?.activate()
+    }
+
+    /// External focus loss (Cmd+Tab, clicked another app) — just hide, other app already has focus
+    private func hide() {
+        guard window.isVisible else { return }
+        previousApp = nil
+        window.orderOut(nil)
     }
 
     private func findTextField(in view: NSView) -> NSTextField? {
