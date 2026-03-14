@@ -70,7 +70,9 @@ class LauncherWindowController {
 
         state.reset()
 
-        if let screen = NSScreen.main {
+        let mouseLocation = NSEvent.mouseLocation
+        let screen = NSScreen.screens.first { NSMouseInRect(mouseLocation, $0.frame, false) } ?? NSScreen.main
+        if let screen = screen {
             let screenRect = screen.visibleFrame
             let x = screenRect.midX - window.frame.width / 2
             let y = screenRect.midY + 100
