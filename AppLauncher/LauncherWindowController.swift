@@ -7,67 +7,17 @@ class KeyableWindow: NSPanel {
 }
 
 class LauncherWindowController {
-    private var window: KeyableWindow?
+    private let window: KeyableWindow
+    private let state = LauncherState()
     private var monitor: Any?
     private var previousApp: NSRunningApplication?
+    private var textField: NSTextField?
 
-    func show() {
-        createWindow()
-
-        guard let window = window else { return }
-
-        if let screen = NSScreen.main {
-            let screenRect = screen.visibleFrame
-            let x = screenRect.midX - window.frame.width / 2
-            let y = screenRect.midY + 100
-            window.setFrameOrigin(NSPoint(x: x, y: y))
-        }
-
-        previousApp = NSWorkspace.shared.frontmostApplication
-        NSApp.activate(ignoringOtherApps: true)
-        window.makeKeyAndOrderFront(nil)
-
-        DispatchQueue.main.async {
-            if let contentView = window.contentView,
-               let textField = self.findTextField(in: contentView) {
-                window.makeFirstResponder(textField)
-            }
-        }
-
-        monitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
-            self?.hide()
-        }
-    }
-
-    private func hide() {
-        window?.orderOut(nil)
-        if let monitor = monitor {
-            NSEvent.removeMonitor(monitor)
-            self.monitor = nil
-        }
-        previousApp?.activate()
-        previousApp = nil
-    }
-
-    private func findTextField(in view: NSView) -> NSTextField? {
-        if let tf = view as? NSTextField, tf.isEditable {
-            return tf
-        }
-        for subview in view.subviews {
-            if let found = findTextField(in: subview) {
-                return found
-            }
-        }
-        return nil
-    }
-
-    private func createWindow() {
+    init() {
         let view = LauncherView(
-            onDismiss: { [weak self] in self?.hide() },
-            onLaunch: { [weak self] app in
-                self?.hide()
-                NSWorkspace.shared.openApplication(at: app.url, configuration: NSWorkspace.OpenConfiguration())
-            }
+            state: state,
+            onDismiss: {},  // placeholder, replaced below
+            onLaunch: { _ in }
         )
 
         let win = KeyableWindow(
@@ -92,5 +42,84 @@ class LauncherWindowController {
         win.isFloatingPanel = true
 
         self.window = win
+
+        // Now rewire callbacks with actual self reference
+        let updatedView = LauncherView(
+            state: state,
+            onDismiss: { [weak self] in self?.hide() },
+            onLaunch: { [weak self] app in
+                self?.hide()
+                NSWorkspace.shared.openApplication(at: app.url, configuration: NSWorkspace.OpenConfiguration())
+            }
+        )
+        hosting.rootView = updatedView
+
+        // Cache the text field reference after layout
+        DispatchQueue.main.async {
+            self.textField = self.findTextField(in: win.contentView!)
+        }
+    }
+
+    func show() {
+        // If already visible, just refocus
+        if window.isVisible {
+            state.reset()
+            focusTextField()
+            return
+        }
+
+        state.reset()
+
+        if let screen = NSScreen.main {
+            let screenRect = screen.visibleFrame
+            let x = screenRect.midX - window.frame.width / 2
+            let y = screenRect.midY + 100
+            window.setFrameOrigin(NSPoint(x: x, y: y))
+        }
+
+        previousApp = NSWorkspace.shared.frontmostApplication
+        NSApp.activate(ignoringOtherApps: true)
+        window.makeKeyAndOrderFront(nil)
+        focusTextField()
+
+        if monitor == nil {
+            monitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+                self?.hide()
+            }
+        }
+    }
+
+    private func focusTextField() {
+        if let tf = textField {
+            window.makeFirstResponder(tf)
+        } else {
+            // Fallback: find and cache it
+            if let tf = findTextField(in: window.contentView!) {
+                textField = tf
+                window.makeFirstResponder(tf)
+            }
+        }
+    }
+
+    private func hide() {
+        window.orderOut(nil)
+        if let monitor = monitor {
+            NSEvent.removeMonitor(monitor)
+            self.monitor = nil
+        }
+        previousApp?.activate()
+        previousApp = nil
+    }
+
+    private func findTextField(in view: NSView) -> NSTextField? {
+        if let tf = view as? NSTextField, tf.isEditable {
+            return tf
+        }
+        for subview in view.subviews {
+            if let found = findTextField(in: subview) {
+                return found
+            }
+        }
+        return nil
     }
 }

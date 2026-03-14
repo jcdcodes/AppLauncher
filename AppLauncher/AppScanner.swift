@@ -1,13 +1,68 @@
 import AppKit
 
 struct AppEntry: Identifiable {
-    let id = UUID()
+    let id: String  // use bundle path as stable identity
     let name: String
     let url: URL
     let icon: NSImage
 }
 
 class AppScanner {
+    static let shared = AppScanner()
+
+    private var cachedApps: [AppEntry] = []
+    private let queue = DispatchQueue(label: "com.local.AppLauncher.scanner")
+
+    var apps: [AppEntry] { cachedApps }
+
+    func initialScan() {
+        cachedApps = Self.scanApps()
+        startWatching()
+    }
+
+    func refreshInBackground() {
+        queue.async { [weak self] in
+            let apps = Self.scanApps()
+            DispatchQueue.main.async {
+                self?.cachedApps = apps
+            }
+        }
+    }
+
+    // MARK: - FSEvents
+
+    private var eventStream: FSEventStreamRef?
+
+    private func startWatching() {
+        let paths = [
+            "/Applications" as CFString,
+            "/System/Applications" as CFString,
+        ] as CFArray
+
+        var context = FSEventStreamContext()
+        context.info = Unmanaged.passUnretained(self).toOpaque()
+
+        guard let stream = FSEventStreamCreate(
+            nil,
+            { _, info, _, _, _, _ in
+                guard let info = info else { return }
+                let scanner = Unmanaged<AppScanner>.fromOpaque(info).takeUnretainedValue()
+                scanner.refreshInBackground()
+            },
+            &context,
+            paths,
+            FSEventStreamEventId(kFSEventStreamEventIdSinceNow),
+            2.0,  // debounce: 2 seconds
+            FSEventStreamCreateFlags(kFSEventStreamCreateFlagNone)
+        ) else { return }
+
+        FSEventStreamSetDispatchQueue(stream, DispatchQueue.main)
+        FSEventStreamStart(stream)
+        eventStream = stream
+    }
+
+    // MARK: - Scanning
+
     static func scanApps() -> [AppEntry] {
         let searchPaths = [
             "/Applications",
@@ -23,7 +78,6 @@ class AppScanner {
             scanDirectory(path, into: &apps, seen: &seen, fm: fm, recursive: true)
         }
 
-        NSLog("AppScanner: found %d apps", apps.count)
         return apps.sorted { $0.name.lowercased() < $1.name.lowercased() }
     }
 
@@ -32,7 +86,6 @@ class AppScanner {
         do {
             items = try fm.contentsOfDirectory(atPath: path)
         } catch {
-            NSLog("AppScanner: failed to read %@: %@", path, error.localizedDescription)
             return
         }
         for item in items {
@@ -44,7 +97,7 @@ class AppScanner {
 
                 let icon = NSWorkspace.shared.icon(forFile: fullPath)
                 icon.size = NSSize(width: 32, height: 32)
-                apps.append(AppEntry(name: name, url: URL(fileURLWithPath: fullPath), icon: icon))
+                apps.append(AppEntry(name: name, url: URL(fileURLWithPath: fullPath), icon: icon, id: fullPath))
             } else if recursive {
                 var isDir: ObjCBool = false
                 if fm.fileExists(atPath: fullPath, isDirectory: &isDir), isDir.boolValue {
@@ -52,5 +105,14 @@ class AppScanner {
                 }
             }
         }
+    }
+}
+
+private extension AppEntry {
+    init(name: String, url: URL, icon: NSImage, id: String) {
+        self.id = id
+        self.name = name
+        self.url = url
+        self.icon = icon
     }
 }

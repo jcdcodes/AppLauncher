@@ -1,6 +1,15 @@
 import SwiftUI
 
+class LauncherState: ObservableObject {
+    @Published var showGeneration: Int = 0
+
+    func reset() {
+        showGeneration += 1
+    }
+}
+
 struct LauncherView: View {
+    @ObservedObject var state: LauncherState
     @State private var query: String = ""
     @State private var allApps: [AppEntry] = []
     @State private var selectedIndex: Int = 0
@@ -81,7 +90,10 @@ struct LauncherView: View {
         .frame(maxHeight: .infinity, alignment: .top)
         .shadow(color: .black.opacity(0.35), radius: 24, x: 0, y: 8)
         .onAppear {
-            allApps = AppScanner.scanApps()
+            allApps = AppScanner.shared.apps
+        }
+        .onChange(of: state.showGeneration) {
+            allApps = AppScanner.shared.apps
             query = ""
             selectedIndex = 0
             searchFocused = true
