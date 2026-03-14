@@ -12,6 +12,7 @@
 		A003 /* LauncherView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B003 /* LauncherView.swift */; };
 		A004 /* LauncherWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B004 /* LauncherWindowController.swift */; };
 		A005 /* LaunchHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = B006 /* LaunchHistory.swift */; };
+		A006 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B007 /* MenuBarController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -22,6 +23,7 @@
 		B004 /* LauncherWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LauncherWindowController.swift; sourceTree = "<group>"; };
 		B005 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B006 /* LaunchHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchHistory.swift; sourceTree = "<group>"; };
+		B007 /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
 		PROD /* AppLauncher.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AppLauncher.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -61,6 +63,7 @@
 				B006 /* LaunchHistory.swift */,
 				B003 /* LauncherView.swift */,
 				B004 /* LauncherWindowController.swift */,
+				B007 /* MenuBarController.swift */,
 				B005 /* Info.plist */,
 			);
 			path = AppLauncher;
@@ -128,6 +131,7 @@
 				A003 /* LauncherView.swift in Sources */,
 				A004 /* LauncherWindowController.swift in Sources */,
 				A005 /* LaunchHistory.swift in Sources */,
+				A006 /* MenuBarController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

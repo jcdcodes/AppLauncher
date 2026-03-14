@@ -23,13 +23,24 @@ struct LauncherView: View {
         let q = query.lowercased()
         let history = LaunchHistory.shared
 
-        // Apps matching by name prefix
-        var results = allApps.filter { $0.name.lowercased().hasPrefix(q) }
+        // Prefix matches first, then substring matches
+        var prefixMatches: [AppEntry] = []
+        var substringMatches: [AppEntry] = []
+        for app in allApps {
+            let name = app.name.lowercased()
+            if name.hasPrefix(q) {
+                prefixMatches.append(app)
+            } else if name.contains(q) {
+                substringMatches.append(app)
+            }
+        }
+        var results = prefixMatches + substringMatches
+        let resultIDs = Set(results.map { $0.id })
 
         // Apps matching via aliases (e.g. "pref" → "System Settings")
         let aliasNames = Set(history.aliasMatches(for: q))
         for app in allApps where aliasNames.contains(app.name) {
-            if !results.contains(where: { $0.id == app.id }) {
+            if !resultIDs.contains(app.id) {
                 results.append(app)
             }
         }
@@ -99,6 +110,12 @@ struct LauncherView: View {
                     }
                 }
             }
+
+            Divider()
+            Text("⌘Q to quit AppLauncher")
+                .font(.system(size: 11))
+                .foregroundColor(.secondary)
+                .padding(.vertical, 6)
         }
         .background(.ultraThinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 12))

@@ -11,6 +11,7 @@ struct AppLauncherApp: App {
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     var launcherWindow: LauncherWindowController?
+    var menuBar: MenuBarController?
     var eventTap: CFMachPort?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -18,6 +19,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         AppScanner.shared.initialScan()
         launcherWindow = LauncherWindowController()
+        menuBar = MenuBarController()
+        menuBar?.setup()
+
+        // Minimal main menu so Cmd-Q works when the app is active
+        let mainMenu = NSMenu()
+        let appMenu = NSMenu()
+        appMenu.addItem(withTitle: "Quit AppLauncher", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        let appMenuItem = NSMenuItem()
+        appMenuItem.submenu = appMenu
+        mainMenu.addItem(appMenuItem)
+        NSApp.mainMenu = mainMenu
 
         registerHotKey()
     }
