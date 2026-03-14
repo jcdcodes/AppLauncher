@@ -37,6 +37,7 @@ class AppScanner {
         let paths = [
             "/Applications" as CFString,
             "/System/Applications" as CFString,
+            "/System/Library/CoreServices/Applications" as CFString,
         ] as CFArray
 
         var context = FSEventStreamContext()
@@ -67,6 +68,7 @@ class AppScanner {
         let searchPaths = [
             "/Applications",
             "/System/Applications",
+            "/System/Library/CoreServices/Applications",
             (NSHomeDirectory() as NSString).appendingPathComponent("Applications")
         ]
 
@@ -76,6 +78,19 @@ class AppScanner {
 
         for path in searchPaths {
             scanDirectory(path, into: &apps, seen: &seen, fm: fm, recursive: true)
+        }
+
+        // Add any running apps not found by filesystem scan (e.g. Finder)
+        for app in NSWorkspace.shared.runningApplications {
+            guard app.activationPolicy == .regular,
+                  let name = app.localizedName,
+                  let url = app.bundleURL,
+                  !seen.contains(name) else { continue }
+            seen.insert(name)
+            let path = url.path
+            let icon = NSWorkspace.shared.icon(forFile: path)
+            icon.size = NSSize(width: 32, height: 32)
+            apps.append(AppEntry(name: name, url: url, icon: icon, id: path))
         }
 
         return apps.sorted { $0.name.lowercased() < $1.name.lowercased() }
