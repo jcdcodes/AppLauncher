@@ -1,0 +1,53 @@
+name: Build Verification
+
+on:
+  pull_request:
+    branches: [ main, master ]
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Build app
+      run: |
+        xcodebuild -project AppLauncher.xcodeproj \
+          -scheme AppLauncher \
+          -configuration Release \
+          -derivedDataPath build \
+          -arch arm64 \
+          CODE_SIGN_IDENTITY="-" \
+          CODE_SIGNING_REQUIRED=NO \
+          build
+
+        echo "✅ Build completed successfully"
+
+    - name: Verify executable
+      run: |
+        APP_PATH=$(find build -name "AppLauncher.app" -type d | head -1)
+        if [ -z "$APP_PATH" ]; then
+          echo "❌ Error: App bundle not found"
+          exit 1
+        fi
+
+        EXEC="${APP_PATH}/Contents/MacOS/AppLauncher"
+        if [ ! -x "$EXEC" ]; then
+          echo "❌ Error: Executable not found or not executable"
+          exit 1
+        fi
+
+        file "$EXEC"
+        echo "✅ Executable verification passed"
+
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: AppLauncher-${{ github.sha }}
+        path: build/Build/Products/Release/AppLauncher.app
+        retention-days: 7
