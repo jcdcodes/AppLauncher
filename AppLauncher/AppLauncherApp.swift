@@ -72,8 +72,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         self.eventTap = tap
 
         let runLoopSource = CFMachPortCreateRunLoopSource(nil, tap, 0)
-        CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
+        CFRunLoopAddSource(CFRunLoopGetMain(), runLoopSource, .commonModes)
         CGEvent.tapEnable(tap: tap, enable: true)
+
+        // macOS can disable event taps at any time (e.g. after permission changes);
+        // periodically re-enable to recover
+        Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
+            guard let tap = self?.eventTap else { return }
+            if !CGEvent.tapIsEnabled(tap: tap) {
+                NSLog("AppLauncher: re-enabling event tap")
+                CGEvent.tapEnable(tap: tap, enable: true)
+            }
+        }
     }
 
     @objc func showLauncher() {
