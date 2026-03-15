@@ -12,15 +12,6 @@ Download the latest DMG from [Releases](https://github.com/jcdcodes/AppLauncher/
 
 The app has no dock icon (`LSUIElement = true`). It runs in the background with a small magnifying glass icon in the menu bar.
 
-## First Launch: Accessibility Permission
-
-macOS requires Accessibility permission for the global hotkey.
-
-- On first launch, go to **System Settings → Privacy & Security → Accessibility**
-- Enable **AppLauncher**
-
-If the hotkey doesn't work, this is almost always why.
-
 ## Usage
 
 | Key | Action |

@@ -1,4 +1,5 @@
 import SwiftUI
+import Carbon
 
 @main
 struct AppLauncherApp: App {
@@ -12,7 +13,7 @@ struct AppLauncherApp: App {
 class AppDelegate: NSObject, NSApplicationDelegate {
     var launcherWindow: LauncherWindowController?
     var menuBar: MenuBarController?
-    var eventTap: CFMachPort?
+    var hotKeyRef: EventHotKeyRef?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -35,55 +36,37 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func registerHotKey() {
-        let mask: CGEventMask = 1 << CGEventType.keyDown.rawValue
+        var hotKeyID = EventHotKeyID()
+        hotKeyID.signature = OSType(0x414C_4348) // 'ALCH'
+        hotKeyID.id = 1
 
-        guard let tap = CGEvent.tapCreate(
-            tap: .cgSessionEventTap,
-            place: .headInsertEventTap,
-            options: .defaultTap,
-            eventsOfInterest: mask,
-            callback: { _, _, event, userInfo in
-                guard let userInfo = userInfo else { return Unmanaged.passUnretained(event) }
+        var eventSpec = EventTypeSpec(
+            eventClass: OSType(kEventClassKeyboard),
+            eventKind: UInt32(kEventHotKeyPressed)
+        )
 
-                let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
-                let flags = event.flags
-
-                // keyCode 0 = A, check for Option (without Cmd/Ctrl/Shift)
-                if keyCode == 0 &&
-                    flags.contains(.maskAlternate) &&
-                    !flags.contains(.maskCommand) &&
-                    !flags.contains(.maskControl) &&
-                    !flags.contains(.maskShift) {
-                    let delegate = Unmanaged<AppDelegate>.fromOpaque(userInfo).takeUnretainedValue()
-                    DispatchQueue.main.async {
-                        delegate.showLauncher()
-                    }
-                    return nil  // consume the event
-                }
-
-                return Unmanaged.passUnretained(event)
+        InstallEventHandler(
+            GetApplicationEventTarget(),
+            { _, _, userData -> OSStatus in
+                guard let userData = userData else { return OSStatus(eventNotHandledErr) }
+                let delegate = Unmanaged<AppDelegate>.fromOpaque(userData).takeUnretainedValue()
+                delegate.showLauncher()
+                return noErr
             },
-            userInfo: Unmanaged.passUnretained(self).toOpaque()
-        ) else {
-            NSLog("AppLauncher: failed to create event tap — check Accessibility permissions")
-            return
-        }
+            1, &eventSpec,
+            Unmanaged.passUnretained(self).toOpaque(),
+            nil
+        )
 
-        self.eventTap = tap
-
-        let runLoopSource = CFMachPortCreateRunLoopSource(nil, tap, 0)
-        CFRunLoopAddSource(CFRunLoopGetMain(), runLoopSource, .commonModes)
-        CGEvent.tapEnable(tap: tap, enable: true)
-
-        // macOS can disable event taps at any time (e.g. after permission changes);
-        // periodically re-enable to recover
-        Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
-            guard let tap = self?.eventTap else { return }
-            if !CGEvent.tapIsEnabled(tap: tap) {
-                NSLog("AppLauncher: re-enabling event tap")
-                CGEvent.tapEnable(tap: tap, enable: true)
-            }
-        }
+        // keyCode 0 = A, optionKey = Option modifier
+        RegisterEventHotKey(
+            0,
+            UInt32(optionKey),
+            hotKeyID,
+            GetApplicationEventTarget(),
+            0,
+            &hotKeyRef
+        )
     }
 
     @objc func showLauncher() {
