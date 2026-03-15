@@ -1,6 +1,6 @@
 # AppLauncher
 
-A minimal macOS app launcher. Press **⌥A** anywhere, type part of an app name, hit **Return**.
+A minimal macOS app launcher; faster and simpler than Spotlight. Press **⌥A** anywhere, type part of an app name, hit **Return**.
 
 ![applauncher](applauncher.gif)
 
