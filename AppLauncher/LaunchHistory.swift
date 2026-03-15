@@ -5,6 +5,7 @@ class LaunchHistory {
 
     private let defaults = UserDefaults.standard
     private let historyKey = "launchHistory"
+    private let lastLaunchedKey = "lastLaunchedApp"
 
     // Hardcoded aliases: typing a prefix of the key surfaces the value
     let aliases: [String: String] = [
@@ -15,6 +16,7 @@ class LaunchHistory {
     /// Record that `appName` was launched after typing `query`.
     /// Stores a mapping for every prefix of the query.
     func record(query: String, appName: String) {
+        defaults.set(appName, forKey: lastLaunchedKey)
         guard !query.isEmpty else { return }
         var history = defaults.dictionary(forKey: historyKey) as? [String: String] ?? [:]
         let q = query.lowercased()
@@ -23,6 +25,11 @@ class LaunchHistory {
             history[prefix] = appName
         }
         defaults.set(history, forKey: historyKey)
+    }
+
+    /// Returns the name of the most recently launched app, if any.
+    var lastLaunchedApp: String? {
+        defaults.string(forKey: lastLaunchedKey)
     }
 
     /// Returns the app name that was last launched for the given query, if any.

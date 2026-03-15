@@ -19,7 +19,16 @@ struct LauncherView: View {
     var onLaunch: (AppEntry) -> Void
 
     var filtered: [AppEntry] {
-        if query.isEmpty { return allApps }
+        if query.isEmpty {
+            if let last = LaunchHistory.shared.lastLaunchedApp,
+               let idx = allApps.firstIndex(where: { $0.name == last }), idx > 0 {
+                var reordered = allApps
+                let app = reordered.remove(at: idx)
+                reordered.insert(app, at: 0)
+                return reordered
+            }
+            return allApps
+        }
         let q = query.lowercased()
         let history = LaunchHistory.shared
 
@@ -143,9 +152,7 @@ struct LauncherView: View {
     private func launch() {
         guard !filtered.isEmpty, selectedIndex < filtered.count else { return }
         let app = filtered[selectedIndex]
-        if !query.isEmpty {
-            LaunchHistory.shared.record(query: query, appName: app.name)
-        }
+        LaunchHistory.shared.record(query: query, appName: app.name)
         onLaunch(app)
     }
 
