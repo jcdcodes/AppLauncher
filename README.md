@@ -2,6 +2,8 @@
 
 A minimal macOS app launcher. Press **⌥A** anywhere, type part of an app name, hit **Return**.
 
+![applauncher](applauncher.gif)
+
 ## Install
 
 Download the latest DMG from [Releases](https://github.com/jcdcodes/AppLauncher/releases), or build from source:
