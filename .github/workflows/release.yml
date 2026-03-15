@@ -205,11 +205,7 @@ jobs:
           3. Move AppLauncher.app to your Applications folder
           4. Open AppLauncher from Applications
 
-          ### Required Permissions
-
-          - **Accessibility**: Required for the global hotkey (⌥A)
-
-          Grant this in System Settings → Privacy & Security → Accessibility.
+          No special permissions required.
 
           ---
 
