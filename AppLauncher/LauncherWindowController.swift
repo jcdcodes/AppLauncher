@@ -83,7 +83,11 @@ class LauncherWindowController {
         if let screen = screen {
             let screenRect = screen.visibleFrame
             let x = screenRect.midX - window.frame.width / 2
-            let y = screenRect.midY + 100
+            // Center vertically with a slight upward bias, clamped to visible screen
+            let y = min(
+                screenRect.midY - window.frame.height / 2 + 100,
+                screenRect.maxY - window.frame.height
+            )
             window.setFrameOrigin(NSPoint(x: x, y: y))
         }
 
